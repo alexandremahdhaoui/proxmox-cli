@@ -20,7 +20,7 @@ show_help() {
     setup                 shows instruction to perform setup.
 
   USAGE:
-    proxmox-cli get nodes my-node"
+    proxmox-cli get nodes mynode"
 }
 
 auth() {
@@ -111,7 +111,7 @@ URL="https://${PM_API_URL}/${REST_ENDPOINT}${QUERY_PARAMS}"
 cmd="curl -sL -k --request \"$METHOD\" $HEADERS --url \"$URL\""
 if [[ $DEBUG == "1" ]]; then echo "$cmd"; fi
 
-cmd="$cmd -b \"AUTH_COOKIE --header \"$CSRF_HEADER\""
+cmd="$cmd -b \"$AUTH_COOKIE --header \"$CSRF_HEADER\""
 if [[ $DEBUG == "2" ]]; then echo "$cmd"; fi
 
 eval "$cmd"
