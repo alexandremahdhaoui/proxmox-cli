@@ -23,22 +23,25 @@ show_help() {
     proxmox-cli get nodes mynode"
 }
 
-auth() {
-  curl -k -s --request=POST\
-    -d "username=$PM_USER_NAME@$PM_USER_DOMAIN"\
-    --data-urlencode "password=$PM_PASS" "$PM_API_URL/access/ticket"
-}
-
 show_setup() {
   echo "Instructions to setup proxmox-cli, please run the following code snippet:
 ---
-read -p \"Please enter the full URL to the proxmox api (e.g. https://mynode.mahdhaoui.com:8006/api2/json)\" PM_API_URL
-read -p \"Please enter your user name.\" PM_USER_NAME
-read -p \"Please select your user domain (e.g. pam) \" PM_USER_DOMAIN
-read -sp \"Please enter your password \" PM_PASS
-export PM_AUTH_COOKIE=$(proxmox-cli token)
-export PM_CSRF_HEADER=$(proxmox-cli csrf)
+    read -p \"Please enter the base URL to one of your proxmox node (e.g. mynode.mahdhaoui.com): \" PM_URL
+    read -p \"Please enter the port for proxmox: (e.g. 8006): \" PM_PORT
+    read -p \"Please enter your user name: \" PM_USER_NAME
+    read -p \"Please select your user domain (e.g. pam): \" PM_USER_DOMAIN
+    read -sp \"Please enter your password: \" PM_PASS
+    export PM_AUTH_COOKIE=\$(proxmox-cli token)
+    export PM_CSRF_HEADER=\$(proxmox-cli csrf)
 ---"
+}
+
+PM_API_URL=https://${PM_URL}:${PM_PORT}/api2/json
+
+auth() {
+  curl -k -sL \
+    -d "username=$PM_USER_NAME@$PM_USER_DOMAIN"\
+    --data-urlencode "password=$PM_PASS" "$PM_API_URL/access/ticket"
 }
 
 # shellcheck disable=SC2016
@@ -53,7 +56,7 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help)
       show_help
-      return 0;;
+      exit 0;;
     -H|--header)
       HEADERS="$HEADERS --header \"$2\""
       shift;shift;;
@@ -69,7 +72,7 @@ while [[ $# -gt 0 ]]; do
     -*|--*)
       echo "Unknown option $1"
       show_help
-      return 1;;
+      exit 1;;
     get)
       METHOD=GET
       shift;;
@@ -87,13 +90,13 @@ while [[ $# -gt 0 ]]; do
       shift;;
     token)
       auth | jq '.data.ticket' | sed 's/\"//g'
-      return 0;;
+      exit 0;;
     csrf)
       auth | jq '.data.CSRFPreventionToken' | sed 's/\"//g'
-      return 0;;
+      exit 0;;
     setup)
       show_setup
-      return 0;;
+      exit 0;;
     *)
       REST_ENDPOINT="$REST_ENDPOINT/$1"
       shift;;
@@ -103,15 +106,15 @@ done
 if [[ $REST_ENDPOINT == "" ]]; then
   echo -e "[ERROR] Please specify an endpoint as positional argument. E.g. proxmox get nodes 123"
   show_help
-  return 1
+  exit 1
 fi
 
-URL="https://${PM_API_URL}/${REST_ENDPOINT}${QUERY_PARAMS}"
+URL="${PM_API_URL}${REST_ENDPOINT}"
 
-cmd="curl -sL -k --request \"$METHOD\" $HEADERS --url \"$URL\""
+cmd="curl -sL -k -X${METHOD} ${HEADERS} --url \"${URL}\""
 if [[ $DEBUG == "1" ]]; then echo "$cmd"; fi
 
-cmd="$cmd -b \"$AUTH_COOKIE --header \"$CSRF_HEADER\""
+cmd="$cmd -b \"$AUTH_COOKIE\" --header \"${CSRF_HEADER}\""
 if [[ $DEBUG == "2" ]]; then echo "$cmd"; fi
 
 eval "$cmd"
