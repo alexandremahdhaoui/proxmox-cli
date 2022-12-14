@@ -20,7 +20,7 @@ show_help() {
     setup                 shows instruction to perform setup.
 
   USAGE:
-    proxmox-cli get nodes mynode"
+    proxmox-cli get nodes mynode qemu"
 }
 
 show_setup() {
@@ -94,7 +94,7 @@ while [[ $# -gt 0 ]]; do
       shift;;
     help)
       show_help
-      shift;;
+      exit 0;;
     token)
       auth | jq '.data.ticket' | sed 's/\"//g'
       exit 0;;
@@ -111,8 +111,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ $REST_ENDPOINT == "" ]]; then
-  echo -e "[ERROR] Please specify an endpoint as positional argument. E.g. proxmox get nodes 123"
   show_help
+  echo -e "\n[ERROR] Please specify at least one endpoint as a positional argument, e.g. proxmox get nodes mynode qemu\n"
   exit 1
 fi
 
