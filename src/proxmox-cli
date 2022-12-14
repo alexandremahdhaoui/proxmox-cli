@@ -4,11 +4,11 @@ show_help() {
   echo "proxmox-cli [METHOD] [PATH]
 
   FLAGS:
+    -d | --data             add data to the api request.
     --debug                 print curl request without displaying auth token & cookie.
     --DEBUG                 print curl request with auth token & cookie.
     -h | --help             print helper.
     -H | --header           add custom http header to the request, e.g. \\\"--header \"YOUR_SUPER_HEADER: <your_value>\"\\\".
-
 
   COMMANDS:
     get                   request with \"GET\" method.
@@ -51,6 +51,7 @@ METHOD="GET"
 HEADERS=""
 REST_ENDPOINT=""
 DEBUG=""
+DATA=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -62,6 +63,12 @@ while [[ $# -gt 0 ]]; do
       shift;shift;;
     --header=*)
       HEADERS="$HEADERS --header ${1#*=}"
+      shift;;
+    -d|--data)
+      DATA="$DATA -d $2"
+      shift;shift;;
+    --data=*)
+      DATA="$DATA -d ${1#*=}"
       shift;;
     --debug)
       DEBUG=1
@@ -111,7 +118,7 @@ fi
 
 URL="${PM_API_URL}${REST_ENDPOINT}"
 
-cmd="curl -sL -k -X${METHOD} ${HEADERS} --url \"${URL}\""
+cmd="curl -sL -k -X${METHOD} ${HEADERS} ${DATA} --url \"${URL}\""
 if [[ $DEBUG == "1" ]]; then echo "$cmd"; fi
 
 cmd="$cmd -b \"$AUTH_COOKIE\" --header \"${CSRF_HEADER}\""
