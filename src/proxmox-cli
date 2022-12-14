@@ -68,7 +68,7 @@ while [[ $# -gt 0 ]]; do
       DATA="$DATA -d $2"
       shift;shift;;
     --data=*)
-      DATA="$DATA -d ${1#*=}"
+      DATA="$DATA --data-urlencode \"${1#*=}\""
       shift;;
     --debug)
       DEBUG=1
